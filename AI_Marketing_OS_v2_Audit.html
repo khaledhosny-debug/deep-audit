@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Marketing OS v2 - Deep Audit</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{margin:0;background:#050505;color:#fff;font-family:Segoe UI,Tahoma}
+.header{padding:20px;background:#0d0d0d;border-bottom:1px solid #222}
+.wrap{padding:20px;max-width:1400px;margin:auto}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:#111;border:1px solid #222;border-radius:18px;padding:18px}
+textarea{width:100%;height:260px;background:#080808;color:#fff;border:1px solid #333;border-radius:12px;padding:10px}
+button{background:#fff;color:#000;border:none;padding:12px 18px;border-radius:12px;font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:20px}
+.kpi{background:#111;padding:15px;border-radius:15px;border:1px solid #222}
+.big{font-size:26px;font-weight:800}
+.red{color:#ff5c5c}.green{color:#3cff8f}.orange{color:#ffb347}
+</style>
+</head>
+<body>
+<div class="header"><h1>🔍 Deep Audit Center</h1></div>
+<div class="wrap">
+
+<div class="grid">
+<div class="card">
+<h3>أدخل الفترتين</h3>
+<textarea id="data">Period 1
+Spend: 4579
+Revenue: 6589
+Purchases: 42
+Clicks: 5207
+LPV: 2563
+ATC: 311
+Checkout: 293
+
+Period 2
+Spend: 1854
+Revenue: 1356
+Purchases: 7
+Clicks: 912
+LPV: 344
+ATC: 63
+Checkout: 68</textarea><br><br>
+<button onclick="runAudit()">تحليل</button>
+</div>
+
+<div class="card">
+<h3>🧠 Root Cause Analysis</h3>
+<div id="causes"></div>
+</div>
+</div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="grid" style="margin-top:20px">
+<div class="card"><canvas id="compare"></canvas></div>
+<div class="card"><canvas id="health"></canvas></div>
+</div>
+
+<div class="card" style="margin-top:20px">
+<h3>🎯 AI Recommendations</h3>
+<div id="recs"></div>
+</div>
+
+</div>
+
+<script>
+let c1,c2;
+
+function val(txt,key){
+ let m=txt.match(new RegExp(key+'\\s*:\\s*([0-9.]+)','i'));
+ return m?parseFloat(m[1]):0;
+}
+
+function runAudit(){
+ let t=document.getElementById('data').value;
+ let parts=t.split(/Period 2/i);
+ let p1=parts[0];
+ let p2='Period 2'+(parts[1]||'');
+
+ let s1=val(p1,'Spend'), s2=val(p2,'Spend');
+ let r1=val(p1,'Revenue'), r2=val(p2,'Revenue');
+ let pu1=val(p1,'Purchases'), pu2=val(p2,'Purchases');
+ let c1k=val(p1,'Clicks'), c2k=val(p2,'Clicks');
+ let lp1=val(p1,'LPV'), lp2=val(p2,'LPV');
+
+ let roas1=(r1/s1).toFixed(2), roas2=(r2/s2).toFixed(2);
+ let change=((roas2-roas1)/roas1*100).toFixed(0);
+
+ document.getElementById('kpis').innerHTML=`
+ <div class='kpi'><div>ROAS P1</div><div class='big'>${roas1}</div></div>
+ <div class='kpi'><div>ROAS P2</div><div class='big'>${roas2}</div></div>
+ <div class='kpi'><div>Revenue Change</div><div class='big red'>${((r2-r1)/r1*100).toFixed(0)}%</div></div>
+ <div class='kpi'><div>Purchases Change</div><div class='big red'>${((pu2-pu1)/pu1*100).toFixed(0)}%</div></div>
+ <div class='kpi'><div>ROAS Change</div><div class='big red'>${change}%</div></div>`;
+
+ let causes=[];
+ if(roas2<roas1) causes.push("🔴 تراجع ROAS بشكل واضح بين الفترتين.");
+ if((lp2/c2k) < (lp1/c1k)) causes.push("🟠 انخفاض LPV Rate يدل على مشكلة جودة الترافيك أو الموقع.");
+ if((pu2/lp2) < (pu1/lp1)) causes.push("🔴 معدل التحويل النهائي أضعف من الفترة السابقة.");
+ document.getElementById('causes').innerHTML=causes.join("<br><br>");
+
+ document.getElementById('recs').innerHTML=`
+ <div class='red'>High Priority: مراجعة الجمهور والاستهداف.</div><br>
+ <div class='orange'>Medium: تحسين صفحة الهبوط ومراجعة LPV Rate.</div><br>
+ <div class='green'>Low: اختبار كريتيفات جديدة مع الحفاظ على الرسائل الناجحة.</div>`;
+
+ if(window.compareChart) compareChart.destroy();
+ compareChart=new Chart(document.getElementById('compare'),{
+ type:'bar',
+ data:{labels:['Spend','Revenue','Purchases'],
+ datasets:[
+ {label:'Period 1',data:[s1,r1,pu1]},
+ {label:'Period 2',data:[s2,r2,pu2]}
+ ]}
+ });
+
+ if(window.healthChart) healthChart.destroy();
+ healthChart=new Chart(document.getElementById('health'),{
+ type:'radar',
+ data:{
+ labels:['Traffic','Creative','Funnel','Conversion','Scaling'],
+ datasets:[{label:'Health',data:[8,8,5,4,6]}]
+ }
+ });
+}
+runAudit();
+</script>
+</body>
+</html>
